@@ -1,0 +1,275 @@
+@using Homework.AspNetCoreMvc.Controllers;
+@using Homework.AspNetCoreMvc.Models;
+@using Homework.Common;
+@using Homework.Common.Dto;
+@using Homework.Common.Web.Network.Http;
+@using Microsoft.AspNetCore.Http;
+@using System.Security.Claims;
+@using Homework.AspNetCoreMvc.Utils;
+
+@inject IHttpContextAccessor HttpContextAccessor;
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration;
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    @{
+        var theme = HttpContextAccessor.HttpContext.Request.Cookies["theme"];
+        var defaultTheme = "dx.material.blue.light.compact.css";
+
+        var currentLayout = string.IsNullOrWhiteSpace(theme) ? defaultTheme : theme;
+
+    }
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>HOMEWORK</title>
+    <link href="~/images/favicon.png" rel="shortcut icon" type="image/x-icon" />
+    <link href="~/css/devextreme/theme.base.css" rel="stylesheet" />
+    <link href="~/css/devextreme/theme.additional.css" rel="stylesheet" />
+    <link href="~/css/devextreme/bootstrap.css" rel="stylesheet" />
+    <link href="~/css/devextreme/@currentLayout" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/Site.css" />
+    <script src="~/js/devextreme/jquery.js"></script>
+    <script src="~/js/devextreme/dx.all.js"></script>
+    <script src="~/js/devextreme/bootstrap.js"></script>
+    <script src="~/js/devextreme/aspnet/dx.aspnet.mvc.js"></script>
+    <script src="~/js/devextreme/aspnet/dx.aspnet.data.js"></script>
+    <script type="text/javascript">
+    </script>
+</head>
+
+<body class="dx-viewport">
+    <div id="app-side-nav-outer-toolbar">
+        <div class="layout-header">
+            @(Html.DevExtreme().Toolbar()
+                .Items(items =>
+                {
+                    items.Add()
+                        .Template(@<text><div class="toolbar-label"><b>HOMEWORK</b></div></text>)
+                        .Location(ToolbarItemLocation.Before)
+                        .CssClass("header-title");
+
+                    items.Add()
+                        .Widget(b => b.DropDownButton()
+                            .SplitButton(true)
+                            .Text(HttpContextAccessor.HttpContext.User.Identity.Name.ToString())
+                            .Icon("user")
+                            .DisplayExpr("Text")
+                            .KeyExpr("Value")
+                            .OnButtonClick(
+                                @<text>
+                                    function(e) {
+                                        e.component.toggle();
+                                    }
+                                </text>
+                            )
+                            .UseSelectMode(false)
+                            .Items(x =>
+                            {
+                                var logOutLbl = "Log out";
+                                x.Add().Html(logOutLbl).Icon("runner").OnClick(@<text>  function(){ window.location = "@Url.Action("Logout", "Login")"; } </text>);
+                            })
+                        ).Location(ToolbarItemLocation.After);
+                })
+            )
+        </div>
+        <div class="layout-body layout-body-hidden">
+            @(Html.DevExtreme().Drawer()
+                .ID("layout-drawer")
+                .Position(DrawerPosition.Left)
+                .Opened(new JS("Homework_AspMvc.restoreDrawerOpened()"))
+                .Content(
+                    @<text>
+                        <div id="layout-drawer-scrollview" class="with-footer">
+                            <div class="content" id="main">
+                                @RenderBody()
+                            </div>
+                            <div class="content-block">
+                                <div class="content-footer">
+                                    <div id="footer">
+                                        Copyright (c) Nenad Lackovic @DateTime.Now.Year
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </text>
+                )
+                .Template(new TemplateName("navigation-menu"))
+            )
+        </div>
+    </div>
+    
+    @(Html.DevExtreme().LoadPanel()
+        .ID("loadPanel")
+        .ShadingColor("rgba(0,0,0,0.4)")
+        .Position(p => p.Of("#main"))
+        .Visible(false)
+        .ShowIndicator(true)
+        .ShowPane(true)
+        .Shading(true)
+        .HideOnOutsideClick(false)
+        .OnShown("loadPanel_shown")
+    )
+
+    <script>
+        var userPermissions;
+        var userName;
+        var obj = (function() {
+            var lang = "en";
+            let name = "lang=";
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    lang = c.substring(name.length, c.length);
+                }
+            }
+
+            DevExpress.localization.locale(lang)
+
+            var DRAWER_OPENED_KEY = "homewowork-drawer-opened";
+
+            var breakpoints = {
+                xSmallMedia: window.matchMedia("(max-width: 599.99px)"),
+                smallMedia: window.matchMedia("(min-width: 600px) and (max-width: 959.99px)"),
+                mediumMedia: window.matchMedia("(min-width: 960px) and (max-width: 1279.99px)"),
+                largeMedia: window.matchMedia("(min-width: 1280px)")
+            };
+
+            function getDrawer() {
+                return $("#layout-drawer").dxDrawer("instance");
+            }
+
+            function restoreDrawerOpened() {
+                var isLarge = breakpoints.largeMedia.matches;
+                if(!isLarge)
+                    return false;
+
+                var state = sessionStorage.getItem(DRAWER_OPENED_KEY);
+                if(state === null)
+                    return isLarge;
+
+                return state === "true";
+            }
+
+            function saveDrawerOpened() {
+                sessionStorage.setItem(DRAWER_OPENED_KEY, getDrawer().option("opened"));
+            }
+
+            function updateDrawer() {
+                var isXSmall = breakpoints.xSmallMedia.matches,
+                    isLarge = breakpoints.largeMedia.matches;
+
+                getDrawer().option({
+                    openedStateMode: isLarge ? "shrink" : "overlap",
+                    revealMode: isXSmall ? "slide" : "expand",
+                    minSize: isXSmall ? 0 : 60,
+                    shading: !isLarge,
+                });
+            }
+
+            function init() {
+                $("#layout-drawer-scrollview").dxScrollView({ direction: "vertical" });
+
+                $.each(breakpoints, function(_, size) {
+                    size.addListener(function(e) {
+                        if(e.matches)
+                            updateDrawer();
+                    });
+                });
+
+                updateDrawer();
+
+                $('.layout-body').removeClass('layout-body-hidden');
+
+                var urlArray = window.location.pathname.split('/');
+                var viewPath = urlArray[1] + '/' + (urlArray[2] === undefined ? 'Index' : urlArray[2]);
+                GetUserPermissions(viewPath);
+                GetLoggedInUser();
+            }
+
+            function navigate(url, delay) {
+
+                if (url && url !== '#' && url !== '')
+                    setTimeout(function () { window.location = window.location.origin + "/" + url }, delay);
+            }
+
+            function onMenuButtonClick() {
+                getDrawer().toggle();
+                saveDrawerOpened();
+            }
+
+            function onTreeViewItemClick(e) {
+                var drawer = getDrawer();
+                var savedOpened = restoreDrawerOpened();
+                var actualOpened = drawer.option("opened");
+
+                if(!actualOpened) {
+                    drawer.show();
+                } else {
+                    var willHide = !savedOpened || !breakpoints.largeMedia.matches;
+                    var willNavigate = !e.itemData.IsSelected && CheckUrl(e.itemData.Url);
+                    if (willHide && CheckUrl(e.itemData.Url))
+                        drawer.hide();
+
+                    if(willNavigate)
+                        navigate(e.itemData.Url, willHide ? 400 : 0);
+                }
+            }
+
+            function CheckUrl(url) {
+                return (url && url !== '#' && url !== '')
+            }
+
+            function MapProperties(item) {
+                if (item.Icon)
+                    item.icon = item.Icon;
+
+                return item;
+            }
+
+            return {
+                init: init,
+                restoreDrawerOpened: restoreDrawerOpened,
+                onMenuButtonClick: onMenuButtonClick,
+                onTreeViewItemClick: onTreeViewItemClick,
+                MapProperties: MapProperties
+            };
+        })();
+
+        document.addEventListener("DOMContentLoaded", function documentReady() {
+            this.removeEventListener("DOMContentLoaded", documentReady);
+            Homework_AspMvc.init();
+        });
+        
+    function loadPanel_shown(e) {
+        setTimeout(function() {
+            e.component.hide();
+        }, 10000);
+    }
+    
+    function getLoadPanelInstance() {
+        return $("#loadPanel").dxLoadPanel("instance");}
+
+    function menuLoaded(e) {
+        if (Array.isArray(e) && e.length === 0) {
+            window.location = "@Url.Action("Logout", "Login")";
+        }
+    }
+    </script>
+
+    @RenderSection("ExternalDependencies", required: false)
+    @RenderSection("Localization", required: false)
+
+    <script src="~/js/devextreme/localization/dx.messages.sr.js"></script>
+</body>
+
+</html>

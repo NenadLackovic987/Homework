@@ -1,0 +1,96 @@
+﻿#LoginForm {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 100px;
+}
+
+#ResetPasswordForm {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 100px;
+}
+
+.login-logo {
+    background-image: url('../../images/logo.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 160px;
+    width: 267px;
+}
+
+#button #button-indicator {
+    height: 32px;
+    width: 32px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.dx-button-text {
+    padding-left: 11px;
+}
+
+.first-group,
+.second-group {
+    padding: 20px;
+}
+
+.dx-datagrid .dx-row > td {
+    padding: 20px 21px;
+    font-size: 13px;
+    line-height: 86px;
+}
+
+#form {
+    max-width: 600px;
+    margin: auto;
+}
+
+#button {
+    margin-top: 50px;
+    margin-right: 20px;
+    float: right;
+}
+
+#fileuploader-container {
+    border: 1px solid #d3d3d3;
+    margin: 20px 20px 0 20px;
+}
+
+#form h3 {
+    margin-left: 20px;
+    font-weight: normal;
+    font-size: 22px;
+}
+
+.image {
+    width: 128px; /* Adjust as needed */
+    height: auto; /* Maintain aspect ratio */
+    margin-left: 10px; /* Adjust the margin between the text and the image */
+}
+.hidden {
+    display: none;
+}
+
+.low.dx-radiobutton-checked .dx-radiobutton-icon .dx-radiobutton-icon-dot {
+    background: gray;
+}
+
+.normal.dx-radiobutton-checked .dx-radiobutton-icon .dx-radiobutton-icon-dot {
+    background: green;
+}
+
+.urgent.dx-radiobutton-checked .dx-radiobutton-icon .dx-radiobutton-icon-dot {
+    background: orange;
+}
+
+.high.dx-radiobutton-checked .dx-radiobutton-icon .dx-radiobutton-icon-dot {
+    background: red;
+}
+
+#radio-group-with-selection {
+    margin-bottom: 10px;
+}

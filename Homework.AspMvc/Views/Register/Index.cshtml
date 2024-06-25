@@ -1,0 +1,115 @@
+﻿@using Homework.AspNetCoreMvc.Models;
+@using Homework.AspNetCoreMvc.Utils
+@{
+    Layout = null;
+    ViewData["Title"] = "Login";
+}
+@inject IHttpContextAccessor HttpContextAccessor;
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration;
+
+<!DOCTYPE html>
+<html>
+<head>
+     @{
+        var theme = HttpContextAccessor.HttpContext.Request.Cookies["theme"];
+        var defaultTheme = "dx.material.blue.light.compact.css";
+
+        var currentLayout = string.IsNullOrWhiteSpace(theme) ? defaultTheme : theme;
+    }
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Homework</title>
+    <link href="~/images/favicon.png" rel="shortcut icon" type="image/x-icon" />
+    <link href="~/css/devextreme/theme.base.css" rel="stylesheet" />
+    <link href="~/css/devextreme/theme.additional.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/Site.css" />
+    <link rel="stylesheet" href="~/css/app/app.css" />
+    <script src="~/js/devextreme/jquery.js"></script>
+    <script src="~/js/devextreme/dx.all.js"></script>
+    <script src="~/js/devextreme/aspnet/dx.aspnet.mvc.js"></script>
+    <script src="~/js/devextreme/aspnet/dx.aspnet.data.js"></script>
+    <link href="~/css/devextreme/@currentLayout" rel="stylesheet" />
+    <script src="~/js/app/app.js"></script>
+
+</head>
+<body class="dx-viewport" id="pageBody">
+    <main>
+        <section>
+            <div class="content">
+                @using (Html.BeginForm("VerifyRegister", "Register", FormMethod.Post, new { id = "LoginForm" }))
+                {
+                    using (Html.DevExtreme().ValidationGroup())
+                    {
+                        @Html.AntiForgeryToken()
+                        @(
+                                Html.DevExtreme().Form<RegisterViewModel>()
+                                .ID("form")
+                                .ColCount(1)
+                                .OnInitialized("onInitialized")
+                                .ValidationGroup("LoginValidation") // TODO
+                                .Width(400)
+                                .Height(400)
+                                .Items(items =>
+                                {
+                                    items.AddGroup()
+                                    .Caption("Register new user")
+                                    .ColCount(1)
+                                    .Items(groupItems =>
+                                    {
+                                        groupItems.AddSimpleFor(m => m.FirstName)
+                                            .ValidationRules(r => r.AddRequired().Message("First name is required field."))
+                                            .Label(p => p.Text("First name"))
+                                            .Editor(e => e.TextBox()
+                                            .ValidationMessagePosition(Position.Bottom));
+                                        groupItems.AddSimpleFor(m => m.LasttName)
+                                            .ValidationRules(r => r.AddRequired().Message("Last name is required field."))
+                                            .Label(p => p.Text("Last name"))
+                                            .Editor(e => e.TextBox()
+                                            .ValidationMessagePosition(Position.Bottom));
+                                        groupItems.AddSimpleFor(m => m.Email)
+                                            .ValidationRules(vr =>
+                                            {
+                                                vr.AddRequired().Message("Email is required field.");
+                                                vr.AddEmail().Message(ResourceProxy.GetResourceValue("manageRole.emailValidation"));
+                                                vr.AddPattern().Pattern(@"^[\d\w._-]+@[\d\w._-]+\.[\w]+$").Message(ResourceProxy.GetResourceValue("login.emailReqEx"));
+                                            })
+                                            .Label(p => p.Text("Email"))
+                                            .Editor(e => e.TextBox()
+                                                        .ID("tbEmail")
+                                                        .ValidationMessagePosition(Position.Bottom)
+                                                        .OnInitialized("FocusEditor")
+                                                    );
+
+                                        groupItems.AddSimpleFor(m => m.Password)
+                                            .ValidationRules(r => r.AddRequired().Message("Password is required field."))
+                                            .Label(p => p.Text("Password"))
+                                            .Editor(e => e.TextBox()
+                                            .InputAttr("aria-label", "Password")
+                                            .ValidationMessagePosition(Position.Bottom)
+                                            .Mode(TextBoxMode.Password));
+                                    });
+
+                                    items.AddGroup().ColCount(2).Items(groupItems => 
+                                    {
+                                        groupItems.AddButton()
+                                            .HorizontalAlignment(HorizontalAlignment.Right)
+                                            .ButtonOptions(b => b.Text("Register")
+                                                .Height(40)
+                                                .Width(180)
+                                                .Type(ButtonType.Default)
+                                                .UseSubmitBehavior(true)
+                                            );
+                                    });
+                                })
+                                .FormData(Model)
+                        )
+                    }
+                }
+            </div>
+        </section>
+    </main>
+</body>
+</html>
